@@ -72,7 +72,6 @@ def handle_player_movement(player):
     if keys[pygame.K_DOWN] and player.y + Y_VELOCITY + player.height <= HEIGHT:
         player.y += Y_VELOCITY
 
-## ... (previous code)
 
 # Function to display the main menu
 def main_menu():
@@ -199,18 +198,16 @@ def game_over_screen():
                 elif event.key == pygame.K_3:
                     return "main_menu"
 
-## Main game loop
-def main():
-    run = True
 
-    while run:
-        return_to_menu = False
+
+# Main game loop
+def main():
+    global background_y1, background_y2  # Declare background_y1 and background_y2 as global
+
+    while True:
         # Display the main menu or restart the game after game over
         if not main_menu():
             break
-
-        # Initialize player position and dimensions
-        player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT)
 
         # Initialize Pygame clock and start time
         clock = pygame.time.Clock()
@@ -224,7 +221,12 @@ def main():
         # List to store star positions
         stars = []
 
-        while run:
+        # Initialize player position and dimensions
+        player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT)
+
+        game_over = False
+
+        while not game_over:
             # Track elapsed time and star creation count
             star_count += clock.tick(150)
             elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
@@ -241,11 +243,8 @@ def main():
             # Handle events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False
-
-            # Check if the player has decided to quit
-            if not run:
-                break  # Exit the loop immediately
+                    pygame.quit()
+                    return
 
             # Handle player movement
             handle_player_movement(player)
@@ -257,7 +256,9 @@ def main():
 
                 # Check for collision with player
                 if pygame.Rect(star_x, star_y, STAR_WIDTH, STAR_HEIGHT).colliderect(player):
-                    run = False
+                    pygame.time.delay(2000)  # Delay for 2 seconds before going to the game over screen
+                    game_over = True  # Set the flag for game over
+                    break  # Break out of the inner loop to show the game over screen
 
                 # Check if star is still on the screen
                 if star_y + STAR_HEIGHT > 0 and star_y < HEIGHT:
@@ -266,7 +267,6 @@ def main():
             stars = new_stars
 
             # Update background positions for seamless looping with separate speed
-            global background_y1, background_y2
             background_y1 += BACKGROUND_SCROLL_VELOCITY
             background_y2 += BACKGROUND_SCROLL_VELOCITY
 
@@ -279,25 +279,14 @@ def main():
             # Draw elements on the screen
             draw(player, elapsed_time, stars)
 
-            # Display game over message and delay before quitting
-            if not run:
+            # Display game over message and delay before going to the main menu
+            if game_over:
                 result = game_over_screen()
 
-                if result == "play_again":
-                    # Reset the game variables and continue the loop
-                    run = True
-                    player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT)
-                    start_time = pygame.time.get_ticks()
-                    elapsed_time = 0
-                    stars = []
-                elif result == "quit":
-                    break
+                if result == "quit":
+                    return
                 elif result == "main_menu":
-                    return_to_menu = True  # Set the flag to return to the main menu
-                    print("returning to main menu")
-
-        if return_to_menu:
-            continue  # Continue to the outer loop for the main menu
+                    break  # Break out of the inner loop to return to the main menu
 
     pygame.quit()
 
