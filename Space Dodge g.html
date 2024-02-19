@@ -82,7 +82,7 @@ def main_menu():
         WIN.fill((0, 0, 0))  # Fill the screen with a black background for the menu
 
         # Adjust the font size for the title
-        title_font = pygame.font.SysFont("comicsans", 70)
+        title_font = pygame.font.SysFont("bauhaus93", 70)
         title_text = title_font.render("Space Dodge", 1, RED)
         WIN.blit(title_text, (WIDTH/2 - title_text.get_width()/2, 150))
 
@@ -172,15 +172,16 @@ def display_controls():
 def game_over_screen():
     WIN.fill((0, 0, 0))  # Fill the screen with a black background for the game over screen
 
-    game_over_text = FONT.render("Game Over!", 1, "red")
+    game_over_font = pygame.font.SysFont("bauhaus93", 70)  # Change the font size as needed
+    game_over_text = game_over_font.render("Game Over!", 1, "red")
     replay_text = FONT.render("1. Play Again", 1, WHITE)
     quit_text = FONT.render("2. Quit", 1, WHITE)
     menu_text = FONT.render("3. Main Menu", 1, WHITE)
 
-    WIN.blit(game_over_text, (WIDTH/2 - game_over_text.get_width()/2, HEIGHT/2 - game_over_text.get_height()/2))
-    WIN.blit(replay_text, (WIDTH/2 - replay_text.get_width()/2, HEIGHT/2 + 20))
-    WIN.blit(quit_text, (WIDTH/2 - quit_text.get_width()/2, HEIGHT/2 + 60))
-    WIN.blit(menu_text, (WIDTH/2 - menu_text.get_width()/2, HEIGHT/2 + 100))
+    WIN.blit(game_over_text, (WIDTH/2 - game_over_text.get_width()/2, HEIGHT/3 - game_over_text.get_height()/2))
+    WIN.blit(replay_text, (WIDTH/2 - replay_text.get_width()/2, HEIGHT/2.5 + 20))
+    WIN.blit(quit_text, (WIDTH/2 - quit_text.get_width()/2, HEIGHT/2.5 + 60))
+    WIN.blit(menu_text, (WIDTH/2 - menu_text.get_width()/2, HEIGHT/2.5 + 100))
 
     pygame.display.update()
 
