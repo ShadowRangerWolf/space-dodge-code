@@ -18,10 +18,14 @@ background_y1, background_y2 = 0, -HEIGHT
 # Load player image
 PLAYER_WIDTH, PLAYER_HEIGHT = 40, 60
 PLAYER_IMAGE = pygame.transform.scale(pygame.image.load("ship.png"), (PLAYER_WIDTH, PLAYER_HEIGHT))
+# Create mask for the player image
+player_mask = pygame.mask.from_surface(PLAYER_IMAGE)
 
 # Load star image
 STAR_WIDTH, STAR_HEIGHT = 25, 50
 STAR_IMAGE = pygame.transform.scale(pygame.image.load("star.png"), (STAR_WIDTH, STAR_HEIGHT))
+# Create mask for the star image
+star_mask = pygame.mask.from_surface(STAR_IMAGE)
 
 # Define player velocity
 PLAYER_VELOCITY = 4  # adjust left and right speed
@@ -71,7 +75,6 @@ def handle_player_movement(player):
         player.y -= Y_VELOCITY
     if keys[pygame.K_DOWN] and player.y + Y_VELOCITY + player.height <= HEIGHT:
         player.y += Y_VELOCITY
-
 
 # Function to display the main menu
 def main_menu():
@@ -132,7 +135,6 @@ def main_menu():
 
     return True  # Continue running the game
 
-
 def get_selected_option(mouse_x, mouse_y):
     text_positions = [
         (WIDTH/2 - FONT.size("1. Start Game")[0]/2, 300),
@@ -153,10 +155,21 @@ def display_controls():
         WIN.fill((0, 0, 0))
 
         controls_text = FONT.render("Controls", 1, WHITE)
-        back_text = FONT.render("Press 'B' to go back", 1, WHITE)
 
-        WIN.blit(controls_text, (WIDTH/2 - controls_text.get_width()/2, 200))
-        WIN.blit(back_text, (WIDTH/2 - back_text.get_width()/2, 300))
+        # Add your controls information here
+        controls_info = [
+            "Use Arrow Keys for Movement:",
+            "   - Left: Move left",
+            "   - Right: Move right",
+            "   - Up: Move up",
+            "   - Down: Move down",
+            "Press 'B' to go back",
+        ]
+
+        # Render controls information
+        for i, line in enumerate(controls_info):
+            line_text = FONT.render(line, 1, WHITE)
+            WIN.blit(line_text, (WIDTH/2 - line_text.get_width()/2, 200 + i * 40))
 
         pygame.display.update()
 
@@ -199,86 +212,131 @@ def game_over_screen():
                 elif event.key == pygame.K_3:
                     return "main_menu"
 
+        pygame.display.update()
 
+def display_pause_menu():
+    WIN.fill((0, 0, 0))  # Fill the screen with a black background for the pause menu
+
+    pause_font = pygame.font.SysFont("comicsans", 60)
+    pause_text = pause_font.render("Paused", 1, RED)
+    resume_text = FONT.render("1. Resume", 1, WHITE)
+    restart_text = FONT.render("2. Restart", 1, WHITE)
+    menu_text = FONT.render("3. Main Menu", 1, WHITE)
+
+    WIN.blit(pause_text, (WIDTH/2 - pause_text.get_width()/2, HEIGHT/3 - pause_text.get_height()/2))
+    WIN.blit(resume_text, (WIDTH/2 - resume_text.get_width()/2, HEIGHT/2.5 + 20))
+    WIN.blit(restart_text, (WIDTH/2 - restart_text.get_width()/2, HEIGHT/2.5 + 60))
+    WIN.blit(menu_text, (WIDTH/2 - menu_text.get_width()/2, HEIGHT/2.5 + 100))
+
+    pygame.display.update()
+
+    pygame.time.delay(500)  # Introduce a delay to reduce flickering
 
 # Main game loop
 def main():
     global background_y1, background_y2  # Declare background_y1 and background_y2 as global
 
+    paused = False  # Track whether the game is currently paused
+    spawn_stars = True  # Track whether star spawning is allowed
+
     while True:
+        clock = pygame.time.Clock()
+
         # Display the main menu or restart the game after game over
         if not main_menu():
             break
 
-        # Initialize Pygame clock and start time
-        clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks()
         elapsed_time = 0
-
-        # Set up star creation parameters
         star_add_increment = 1000
         star_count = 0
-
-        # List to store star positions
         stars = []
-
-        # Initialize player position and dimensions
         player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT)
-
         game_over = False
 
         while not game_over:
-            # Track elapsed time and star creation count
-            star_count += clock.tick(150)
-            elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
-
-            # Create new stars based on time interval
-            if star_count > star_add_increment:
-                for _ in range(3):
-                    stars.append(create_star())
-
-                # Adjust star creation parameters
-                star_add_increment = max(200, star_add_increment - 50)
-                star_count = 0
-
-            # Handle events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     return
 
-            # Handle player movement
-            handle_player_movement(player)
+                # Handle pause event (e.g., press 'P' key)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                    paused = not paused  # Toggle the paused state
 
-            # Update star positions and check for collisions
-            new_stars = []
-            for star_x, star_y in stars:
-                star_y += STAR_VELOCITY
+                    # Pause or resume star spawning based on the game pause state
+                    spawn_stars = not paused
 
-                # Check for collision with player
-                if pygame.Rect(star_x, star_y, STAR_WIDTH, STAR_HEIGHT).colliderect(player):
-                    pygame.time.delay(2000)  # Delay for 2 seconds before going to the game over screen
-                    game_over = True  # Set the flag for game over
-                    break  # Break out of the inner loop to show the game over screen
+            # If the game is not paused, update star positions and check for collisions
+            if not paused:
+                # Track elapsed time and star creation count
+                star_count += clock.tick(150)
+                elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
 
-                # Check if star is still on the screen
-                if star_y + STAR_HEIGHT > 0 and star_y < HEIGHT:
-                    new_stars.append((star_x, star_y))
+                # Create new stars based on time interval and when star spawning is allowed
+                if spawn_stars and star_count > star_add_increment:
+                    for _ in range(3):
+                        stars.append(create_star())
 
-            stars = new_stars
+                    # Adjust star creation parameters
+                    star_add_increment = max(200, star_add_increment - 50)
+                    star_count = 0
 
-            # Update background positions for seamless looping with separate speed
-            background_y1 += BACKGROUND_SCROLL_VELOCITY
-            background_y2 += BACKGROUND_SCROLL_VELOCITY
+                # Handle player movement
+                handle_player_movement(player)
 
-            if background_y1 >= HEIGHT:
-                background_y1 = -HEIGHT
+                # Update star positions and check for collisions
+                new_stars = []
+                for star_x, star_y in stars:
+                    star_y += STAR_VELOCITY
 
-            if background_y2 >= HEIGHT:
-                background_y2 = -HEIGHT
+                    # Check for collision with player using mask
+                    if player_mask.overlap(star_mask, (int(star_x - player.x), int(star_y - player.y))):
+                        print("Collision detected with star at:", star_x, star_y)
+                        pygame.time.delay(2000)  # Delay for 2 seconds before going to the game over screen
+                        game_over = True  # Set the flag for game over
+                        break  # Break out of the inner loop to show the game over screen
+
+                    # Check if star is still on the screen
+                    if star_y + STAR_HEIGHT > 0 and star_y < HEIGHT:
+                        new_stars.append((star_x, star_y))
+
+                stars = new_stars
+
+                # Update background positions for seamless looping with separate speed
+                background_y1 += BACKGROUND_SCROLL_VELOCITY
+                background_y2 += BACKGROUND_SCROLL_VELOCITY
+
+                if background_y1 >= HEIGHT:
+                    background_y1 = -HEIGHT
+
+                if background_y2 >= HEIGHT:
+                    background_y2 = -HEIGHT
 
             # Draw elements on the screen
             draw(player, elapsed_time, stars)
+
+            # If the game is paused, display the pause menu outside of the event loop
+            if paused:
+                display_pause_menu()
+
+                pause_event = pygame.event.wait()
+                if pause_event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+                elif pause_event.type == pygame.KEYDOWN:
+                    if pause_event.key == pygame.K_1:
+                        paused = False  # Resume the game
+                    elif pause_event.key == pygame.K_2:
+                        # Restart the game
+                        # Reset game variables before starting the main game loop
+                        paused = False
+                        game_over = True
+                    elif pause_event.key == pygame.K_3:
+                        # Return to the main menu
+                        paused = False
+                        game_over = True  # Set the flag for game over
+                        break
 
             # Display game over message and delay before going to the main menu
             if game_over:
@@ -288,6 +346,15 @@ def main():
                     return
                 elif result == "main_menu":
                     break  # Break out of the inner loop to return to the main menu
+                elif result == "play_again":
+                    # Reset game variables before starting the main game loop
+                    start_time = pygame.time.get_ticks()
+                    elapsed_time = 0
+                    star_add_increment = 1000
+                    star_count = 0
+                    stars = []
+                    player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT)
+                    game_over = False
 
     pygame.quit()
 
