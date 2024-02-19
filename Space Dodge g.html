@@ -38,6 +38,8 @@ BACKGROUND_SCROLL_VELOCITY = 1  # Background scrolling speed
 FONT = pygame.font.SysFont("comicsans", 30)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
 
 # Function to draw elements on the screen
 def draw(player, elapsed_time, stars):
@@ -81,18 +83,32 @@ def main_menu():
     run_menu = True
     selected_option = None  # To track which option is currently selected
 
+    # Load the new image to be displayed on a black background
+    original_menu_image = pygame.image.load("mm bg.png")
+    menu_image = pygame.transform.scale(original_menu_image, (400, 600))  # Adjust width and height
+
+    # Rotate the menu image by 45 degrees to the right
+    menu_image_rotated = pygame.transform.rotate(menu_image, -40)
+
     while run_menu:
         WIN.fill((0, 0, 0))  # Fill the screen with a black background for the menu
 
+        # Calculate the coordinates to center the rotated image on the screen
+        image_x = (WIDTH - menu_image_rotated.get_width()) // -2
+        image_y = (HEIGHT - menu_image_rotated.get_height()) // 1
+
+        # Display the rotated image on the black background
+        WIN.blit(menu_image_rotated, (image_x, image_y))
+
         # Adjust the font size for the title
         title_font = pygame.font.SysFont("bauhaus93", 70)
-        title_text = title_font.render("Space Dodge", 1, RED)
+        title_text = title_font.render("Space Dodge", 1, RED,)
         WIN.blit(title_text, (WIDTH/2 - title_text.get_width()/2, 150))
 
         # Render menu options
-        menu_text = FONT.render("Main Menu", 1, WHITE)
+        menu_text = FONT.render("Main Menu", 1, BLUE)
         start_text = FONT.render("1. Start Game", 1, RED if selected_option == 1 else WHITE)
-        controls_text = FONT.render("2. Controls", 1, RED if selected_option == 2 else WHITE)
+        controls_text = FONT.render("2. Controls", 1, RED if selected_option == 2 else BLUE)
         exit_text = FONT.render("3. Exit", 1, RED if selected_option == 3 else WHITE)
 
         WIN.blit(menu_text, (WIDTH/2 - menu_text.get_width()/2, 250))
@@ -257,8 +273,10 @@ def main():
         while not game_over:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    running = False  # Set running to False when the user closes the window
                     pygame.quit()
                     return
+
 
                 # Handle pause event (e.g., press 'P' key)
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
